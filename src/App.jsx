@@ -15,9 +15,9 @@ export default function App() {
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
   const [spotifyCover, setSpotifyCover] = useState("");
   const [textColor, setTextColor] = useState("#ffffff");
-  const [spotifyClientId, setSpotifyClientId] = useState("");
-  const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
-  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState("");
+  const [spotifyClientId, setSpotifyClientId] = useState(localStorage.getItem('spotifyClientId'));
+  const [spotifyClientSecret, setSpotifyClientSecret] = useState(localStorage.getItem('spotifyClientSecret'));
+  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState(localStorage.getItem('spotifyRefreshToken'));
 
   const CURRENTLY_PLAYING_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing";
   const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
@@ -101,17 +101,17 @@ export default function App() {
 
   function changeSpotifyClientId(value) {
     setSpotifyClientId(value);
-    localStorage.setItem('spotifyClientId', JSON.stringify(value));
+    localStorage.setItem('spotifyClientId', value);
   }
 
   function changeSpotifyClientSecret(value) {
     setSpotifyClientSecret(value);
-    localStorage.setItem('spotifyClientSecret', JSON.stringify(value));
+    localStorage.setItem('spotifyClientSecret', value);
   }
 
   function changeSpotifyRefreshToken(value) {
     setSpotifyRefreshToken(value);
-    localStorage.setItem('spotifyRefreshToken', JSON.stringify(value));
+    localStorage.setItem('spotifyRefreshToken', value);
   }
 
   function hexToRgba(level) {
@@ -198,15 +198,15 @@ export default function App() {
         }
         const savedSpotifyClientId = localStorage.getItem('spotifyClientId');
         if (savedSpotifyClientId) {
-          setSpotifyClientId(JSON.parse(savedSpotifyClientId));
+          setSpotifyClientId(savedSpotifyClientId);
         }
         const savedSpotifyClientSecret = localStorage.getItem('spotifyClientSecret');
         if (savedSpotifyClientSecret) {
-          setSpotifyClientSecret(JSON.parse(savedSpotifyClientSecret));
+          setSpotifyClientSecret(savedSpotifyClientSecret);
         }
         const savedSpotifyRefreshToken = localStorage.getItem('spotifyRefreshToken');
         if (savedSpotifyRefreshToken) {
-          setSpotifyRefreshToken(JSON.parse(savedSpotifyRefreshToken));
+          setSpotifyRefreshToken(savedSpotifyRefreshToken);
         }
       }
     }
