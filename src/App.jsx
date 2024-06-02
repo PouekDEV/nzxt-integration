@@ -143,10 +143,8 @@ export default function App() {
         catch(e){}
       }
       else{
-        if(spotifyCover != ""){
-          setSpotifyCover("");
-          document.getElementById('spotify_title').innerHTML = "";
-        }
+        setSpotifyCover("");
+        document.getElementById('spotify_title').innerHTML = "";
       }
     }
   }
