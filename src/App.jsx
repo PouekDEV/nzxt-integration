@@ -8,20 +8,56 @@ export default function App() {
   const [kraken, setKraken] = useState(0);
   const [showCpu, setShowCpu] = useState(true);
   const [showGpu, setShowGpu] = useState(true);
-  const [showClock, setShowClock] = useState(false);
   const [showWater, setShowWater] = useState(true);
+  const [showWaterSpotify, setShowWaterSpotify] = useState(false);
   const [waterColor, setWaterColor] = useState("#00b1c5");
   const [backgroundColor, setBackgroundColor] = useState("#000000");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [spotifyCover, setSpotifyCover] = useState("");
   const [textColor, setTextColor] = useState("#ffffff");
+  const [spotifyClientId, setSpotifyClientId] = useState("");
+  const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
+  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState("");
 
-  setInterval(function getCurrentTime() {
-    if(showClock){
-      const now = new Date();
-      const currentTime = now.toLocaleTimeString('en-US', { hour12: false });
-      document.getElementById('time').innerHTML = currentTime;
-    }
-  },1000)
+  const CURRENTLY_PLAYING_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing";
+  const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
+
+  //https://accounts.spotify.com/authorize?client_id=<client_id>&response_type=code&redirect_uri=<redirect_uri>&scope=user-read-currently-playing
+  //curl -H "Authorization: Basic YOUR_ENCODED_STRING" -d grant_type=authorization_code -d code=YOUR_CODE -d redirect_uri=http://localhost:3000 https://accounts.spotify.com/api/token 
+
+  async function getAccessToken(){
+    const basic = btoa(`${spotifyClientId}:${spotifyClientSecret}`).toString("base64");
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: spotifyRefreshToken,
+    });
+    const response = await fetch(TOKEN_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+    return response.json().then((x) => x?.access_token);
+  }
+
+  async function getCurrentlyPlaying(){
+    const accessToken = await getAccessToken();
+    return fetch(CURRENTLY_PLAYING_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }).then(async (x) => {
+      if (x.status !== 200) {
+        return null;
+      } else {
+        const data = await x.json();
+        if (data.currently_playing_type !== "track" || !data.is_playing) return null;
+        else return data;
+      }
+    });
+  }
 
   function changeWaterColor(value) {
     setWaterColor(value);
@@ -43,11 +79,6 @@ export default function App() {
     localStorage.setItem('showGpu', JSON.stringify(!showGpu));
   }
 
-  function changeClockVisibility() {
-    setShowClock(!showClock);
-    localStorage.setItem('showClock', JSON.stringify(!showClock));
-  }
-
   function changeBackgroundImageUrl(value) {
     setBackgroundImageUrl(value);
     localStorage.setItem('backgroundImageUrl', JSON.stringify(value));
@@ -63,6 +94,26 @@ export default function App() {
     localStorage.setItem('textColor', JSON.stringify(value));
   }
 
+  function changeWaterSpotifyVisibility(){
+    setShowWaterSpotify(!showWaterSpotify);
+    localStorage.setItem('showWaterSpotify', JSON.stringify(!showWaterSpotify));
+  }
+
+  function changeSpotifyClientId(value) {
+    setSpotifyClientId(value);
+    localStorage.setItem('spotifyClientId', JSON.stringify(value));
+  }
+
+  function changeSpotifyClientSecret(value) {
+    setSpotifyClientSecret(value);
+    localStorage.setItem('spotifyClientSecret', JSON.stringify(value));
+  }
+
+  function changeSpotifyRefreshToken(value) {
+    setSpotifyRefreshToken(value);
+    localStorage.setItem('spotifyRefreshToken', JSON.stringify(value));
+  }
+
   function hexToRgba(level) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(waterColor);
     if(result){
@@ -76,7 +127,29 @@ export default function App() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     setKraken(searchParams.get("kraken"));
+    const spotifyInterval = setInterval(checkSpotify, 10000);
+    return () => clearInterval(spotifyInterval);
   }, []);
+
+  async function checkSpotify(){
+    if(spotifyClientId != "" && spotifyClientSecret != "" && spotifyRefreshToken != ""){
+      const w = await getCurrentlyPlaying();
+      if(w != null){
+        setSpotifyCover(w.item.album.images[0].url);
+        const artists = w.item.artists.map((artist) => artist.name).join(" ");
+        try{
+          document.getElementById('spotify_title').innerHTML = w.item.name + "<br><span class='text-3xl'>" + artists + "</span>";
+        }
+        catch(e){}
+      }
+      else{
+        if(spotifyCover != ""){
+          setSpotifyCover("");
+          document.getElementById('spotify_title').innerHTML = "";
+        }
+      }
+    }
+  }
 
   window.nzxt = {
     v1: {
@@ -103,10 +176,6 @@ export default function App() {
         if (savedShowGpu) {
           setShowGpu(JSON.parse(savedShowGpu));
         }
-        const savedShowClock = localStorage.getItem('showClock');
-        if (savedShowClock) {
-          setShowClock(JSON.parse(savedShowClock));
-        }
         const savedBackgroundColor = localStorage.getItem('backgroundColor');
         if (savedBackgroundColor) {
           setBackgroundColor(JSON.parse(savedBackgroundColor));
@@ -123,6 +192,22 @@ export default function App() {
         if (savedTextColor) {
           setTextColor(JSON.parse(savedTextColor));
         }
+        const savedShowWaterSpotify = localStorage.getItem('showWaterSpotify');
+        if (savedShowWaterSpotify) {
+          setShowWaterSpotify(JSON.parse(savedShowWaterSpotify));
+        }
+        const savedSpotifyClientId = localStorage.getItem('spotifyClientId');
+        if (savedSpotifyClientId) {
+          setSpotifyClientId(JSON.parse(savedSpotifyClientId));
+        }
+        const savedSpotifyClientSecret = localStorage.getItem('spotifyClientSecret');
+        if (savedSpotifyClientSecret) {
+          setSpotifyClientSecret(JSON.parse(savedSpotifyClientSecret));
+        }
+        const savedSpotifyRefreshToken = localStorage.getItem('spotifyRefreshToken');
+        if (savedSpotifyRefreshToken) {
+          setSpotifyRefreshToken(JSON.parse(savedSpotifyRefreshToken));
+        }
       }
     }
   };
@@ -131,12 +216,12 @@ export default function App() {
     <>
       {kraken != null ?
         <>
-          <div className="flex justify-center items-center h-screen bg-no-repeat bg-cover bg-center" style={{backgroundColor: backgroundColor, backgroundImage: "url('"+backgroundImageUrl+"')", color: textColor}}>
-            <div className="justify-center items-center z-40">
-              {showClock &&
-                <p className="text-5xl text-center mb-12" id="time"></p>
-              }
-              <div className="text-8xl flex my-12">
+          <div className={"justify-center items-center h-screen bg-no-repeat bg-cover bg-center" + (spotifyCover != "" && " bg-blend-multiply")} style={{backgroundColor: (spotifyCover != "" ? "rgba(0,0,0,0.5)" : backgroundColor), backgroundImage: "url('"+(spotifyCover != "" ? spotifyCover : backgroundImageUrl )+"')", color: textColor}}>
+            <div className="sticky z-40">
+              <p className="text-5xl text-center py-[5rem]" id="spotify_title"></p>
+            </div>
+            <div className="flex fixed justify-center items-center top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-40">
+              <div className="text-8xl flex">
                 {showCpu &&
                   <span className="px-6">
                     <p className="text-5xl text-center">
@@ -157,23 +242,25 @@ export default function App() {
             </div>
           </div>
           {showWater &&
-            <>
-              <div className="fixed w-[100%] z-0" style={{top: 100-ramUsage + "%"}}>
-                <svg className="waves" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink"
-                    viewBox="0 24 150 20" preserveAspectRatio="none" shapeRendering="auto">
-                    <defs>
-                        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-                    </defs>
-                    <g className="parallax">
-                        <use xlinkHref="#gentle-wave" x="48" y="0" fill={hexToRgba(0)} />
-                        <use xlinkHref="#gentle-wave" x="48" y="-3" fill={hexToRgba(1)} />
-                        <use xlinkHref="#gentle-wave" x="48" y="-5" fill={hexToRgba(2)} />
-                        <use xlinkHref="#gentle-wave" x="48" y="5" fill={waterColor} />
-                    </g>
-                </svg>
-              </div>
-              <div className="fixed w-[100%] h-[100%]" style={{top: 100-ramUsage+6.3 + "%", backgroundColor: waterColor}}></div>
-            </>
+            ((showWaterSpotify && spotifyCover != "" || spotifyCover == "") &&
+              <>
+                <div className="fixed w-[100%] z-0" style={{top: 100-ramUsage + "%"}}>
+                  <svg className="waves" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink"
+                      viewBox="0 24 150 20" preserveAspectRatio="none" shapeRendering="auto">
+                      <defs>
+                          <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                      </defs>
+                      <g className="parallax">
+                          <use xlinkHref="#gentle-wave" x="48" y="0" fill={hexToRgba(0)} />
+                          <use xlinkHref="#gentle-wave" x="48" y="-3" fill={hexToRgba(1)} />
+                          <use xlinkHref="#gentle-wave" x="48" y="-5" fill={hexToRgba(2)} />
+                          <use xlinkHref="#gentle-wave" x="48" y="5" fill={waterColor} />
+                      </g>
+                  </svg>
+                </div>
+                <div className="fixed w-[100%] h-[100%]" style={{top: 100-ramUsage+6.3 + "%", backgroundColor: waterColor}}></div>
+              </>
+            )
           }
         </>
       : 
@@ -198,6 +285,18 @@ export default function App() {
             <input className="mx-5 text-black" type="text" value={backgroundImageUrl} onChange={(e) => changeBackgroundImageUrl(e.target.value)}/>
           </div>
           <div>
+            <span className="mx-5">Set spotify client id</span>
+            <input className="mx-5 text-black" type="text" value={spotifyClientId} onChange={(e) => changeSpotifyClientId(e.target.value)}/>
+          </div>
+          <div>
+            <span className="mx-5">Set spotify client secret</span>
+            <input className="mx-5 text-black" type="text" value={spotifyClientSecret} onChange={(e) => changeSpotifyClientSecret(e.target.value)}/>
+          </div>
+          <div>
+            <span className="mx-5">Set spotify refresh token</span>
+            <input className="mx-5 text-black" type="text" value={spotifyRefreshToken} onChange={(e) => changeSpotifyRefreshToken(e.target.value)}/>
+          </div>
+          <div>
             <span className="mx-5">Show CPU</span>
             <input type="checkbox" checked={showCpu} onChange={() => changeCpuVisibility()}/>
           </div>
@@ -206,12 +305,12 @@ export default function App() {
             <input type="checkbox" checked={showGpu} onChange={() => changeGpuVisibility()}/>
           </div>
           <div>
-            <span className="mx-5">Show Clock</span>
-            <input type="checkbox" checked={showClock} onChange={() => changeClockVisibility()}/>
-          </div>
-          <div>
             <span className="mx-5">Show Water</span>
             <input type="checkbox" checked={showWater} onChange={() => changeWaterVisibility()}/>
+          </div>
+          <div>
+            <span className="mx-5">Show water while Spotify is playing</span>
+            <input type="checkbox" checked={showWaterSpotify} onChange={() => changeWaterSpotifyVisibility()}/>
           </div>
         </div>
       }
