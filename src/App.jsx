@@ -18,6 +18,8 @@ export default function App() {
   const [spotifyClientId, setSpotifyClientId] = useState(localStorage.getItem('spotifyClientId'));
   const [spotifyClientSecret, setSpotifyClientSecret] = useState(localStorage.getItem('spotifyClientSecret'));
   const [spotifyRefreshToken, setSpotifyRefreshToken] = useState(localStorage.getItem('spotifyRefreshToken'));
+  const [spotifyProgress, setSpotifyProgress] = useState(0);
+  const [spotifyDuration, setSpotifyDuration] = useState(0);
 
   const CURRENTLY_PLAYING_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing";
   const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
@@ -128,6 +130,8 @@ export default function App() {
     const searchParams = new URLSearchParams(window.location.search);
     setKraken(searchParams.get("kraken"));
     const spotifyInterval = setInterval(checkSpotify, 10000);
+    if (!window.location.search && kraken == null)
+      window.location.replace(`?no-cache=${crypto.randomUUID()}`)
     return () => clearInterval(spotifyInterval);
   }, []);
 
@@ -136,6 +140,8 @@ export default function App() {
       const w = await getCurrentlyPlaying();
       if(w != null){
         setSpotifyCover(w.item.album.images[0].url);
+        setSpotifyProgress(w.progress_ms);
+        setSpotifyDuration(w.item.duration_ms);
         const artists = w.item.artists.map((artist) => artist.name).join(" ");
         try{
           document.getElementById('spotify_title').innerHTML = w.item.name + "<br><span class='text-3xl'>" + artists + "</span>";
@@ -147,6 +153,12 @@ export default function App() {
         document.getElementById('spotify_title').innerHTML = "";
       }
     }
+  }
+
+  function convertMsToTime(ms){
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
   }
 
   window.nzxt = {
@@ -212,7 +224,7 @@ export default function App() {
 
   return (
     <>
-      {kraken != null ?
+      {kraken == null ?
         <>
           <div className={"justify-center items-center h-screen bg-no-repeat bg-cover bg-center" + (spotifyCover != "" && " bg-blend-multiply")} style={{backgroundColor: (spotifyCover != "" ? "rgba(0,0,0,0.5)" : backgroundColor), backgroundImage: "url('"+(spotifyCover != "" ? spotifyCover : backgroundImageUrl )+"')", color: textColor}}>
             <div className="sticky z-40">
@@ -238,6 +250,13 @@ export default function App() {
                 }
               </div>
             </div>
+            {spotifyCover != "" &&
+              <div className="flex fixed justify-center items-center z-40 top-[75%] left-[50%] translate-x-[-50%] translate-y-[-50%] text-4xl">
+                <span className="px-2">{convertMsToTime(spotifyProgress)}</span>
+                <progress className="w-[20rem] text-xl rounded-lg" value={spotifyProgress} max={spotifyDuration}></progress>
+                <span className="px-2">{convertMsToTime(spotifyDuration)}</span>
+              </div>
+            }
           </div>
           {showWater &&
             ((showWaterSpotify && spotifyCover != "" || spotifyCover == "") &&
