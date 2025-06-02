@@ -247,12 +247,12 @@ export default function App(){
 
     return (
         <>
-            {kraken != null ?
+            {kraken == null ?
                 <>
                     <div className={"justify-center items-center h-screen bg-no-repeat bg-cover bg-center" + (spotifyCover != "" && " bg-blend-multiply")} style={{backgroundColor: (spotifyCover != "" ? "rgba(0,0,0,0.5)" : backgroundColor), backgroundImage: "url('"+(spotifyCover != "" ? spotifyCover : backgroundImageUrl )+"')", color: textColor}}>
                         <div className="sticky z-40">
                             <div className="text-5xl text-center py-[5rem]" id="spotify_title">
-                                <span className="block overflow-hidden text-ellipsis whitespace-nowrap pb-5 px-4">
+                                <span className="block overflow-hidden text-ellipsis pb-5 px-4">
                                     {spotifyTitle}
                                 </span>
                                 <span className="text-3xl block overflow-hidden text-ellipsis whitespace-nowrap px-12">
