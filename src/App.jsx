@@ -247,7 +247,7 @@ export default function App(){
 
     return (
         <>
-            {kraken == null ?
+            {kraken != null ?
                 <>
                     <div className={"justify-center items-center h-screen bg-no-repeat bg-cover bg-center" + (spotifyCover != "" && " bg-blend-multiply")} style={{backgroundColor: (spotifyCover != "" ? "rgba(0,0,0,0.5)" : backgroundColor), backgroundImage: "url('"+(spotifyCover != "" ? spotifyCover : backgroundImageUrl )+"')", color: textColor}}>
                         <div className="sticky z-40">
