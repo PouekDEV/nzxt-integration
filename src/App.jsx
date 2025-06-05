@@ -252,10 +252,10 @@ export default function App(){
                     <div className={"justify-center items-center h-screen bg-no-repeat bg-cover bg-center" + (spotifyCover != "" && " bg-blend-multiply")} style={{backgroundColor: (spotifyCover != "" ? "rgba(0,0,0,0.5)" : backgroundColor), backgroundImage: "url('"+(spotifyCover != "" ? spotifyCover : backgroundImageUrl )+"')", color: textColor}}>
                         <div className="sticky z-40">
                             <div className="text-5xl text-center py-[5rem]" id="spotify_title">
-                                <span className="block overflow-hidden text-ellipsis pb-5 px-4">
+                                <span className="block overflow-hidden leading-[3.5rem] min-h-[3.5rem] max-h-[7rem] mb-1 mx-[5rem]">
                                     {spotifyTitle}
                                 </span>
-                                <span className="text-3xl block overflow-hidden text-ellipsis whitespace-nowrap px-12">
+                                <span className="text-3xl block overflow-hidden text-ellipsis whitespace-nowrap mx-[2.5rem]">
                                     {spotifyArtists}
                                 </span>
                             </div>
