@@ -158,8 +158,20 @@ export default function App(){
         });
     }
 
+    function isSet(value){
+        if(typeof value === "undefined" || value === null){
+            return false;
+        }
+        if(typeof value === "string"){
+            if(value.trim() == ""){
+                return false
+            }
+        }
+        return true;
+    }
+
     async function checkSpotify(){
-        if(spotifyClientId != "" && spotifyClientSecret != "" && spotifyRefreshToken != ""){
+        if(isSet(spotifyClientId) && isSet(spotifyClientSecret) && isSet(spotifyRefreshToken)){
             const w = await getCurrentlyPlaying();
             if(w != null){
                 setSpotifyCover(w.item.album.images[0].url);
