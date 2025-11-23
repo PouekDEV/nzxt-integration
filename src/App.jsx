@@ -317,7 +317,7 @@ export default function App(){
                                         </g>
                                     </svg>
                                 </div>
-                                <div className="fixed w-[100%] h-[100%]" style={{top: 100-ramUsage+6.3 + "%", backgroundColor: waterColor}}></div>
+                                <div className="fixed w-[100%] h-[100%]" style={{top: 100-ramUsage+6 + "%", backgroundColor: waterColor}}></div>
                             </>
                         )
                     }
